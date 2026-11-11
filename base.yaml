@@ -1,0 +1,8 @@
+---
+- name: Test Ansible pipeline
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Print success message
+      ansible.builtin.debug:
+        msg: 'Ansible pipeline is working successfully!'

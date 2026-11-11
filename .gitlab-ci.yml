@@ -24,7 +24,7 @@ syntax_check:
   tags:
     - Ansible
   script:
-    - ansible-playbook --syntax-check -i inventory/ base.yaml
+    - ansible-playbook --syntax-check -i inventory/base.yaml base.yaml
 
 # Шаг 2: Раскатка конфигурации на серверы (запускается вручную кнопкой в интерфейсе)
 deploy_servers:
@@ -34,7 +34,7 @@ deploy_servers:
     - Ansible
   <<: *ssh_setup
   script:
-    - ansible-playbook -i inventory/ base.yaml
+    - ansible-playbook -i inventory/base.yaml base.yaml
   when: manual
   only:
     - main
