@@ -1,0 +1,40 @@
+stages:
+  - lint
+  - deploy
+
+variables:
+  # Отключаем проверку SSH-ключей хостов, чтобы пайплайн не зависал на вопросе (yes/no)
+  ANSIBLE_HOST_KEY_CHECKING: 'False'
+  # Включаем цветной вывод в логах GitLab
+  ANSIBLE_FORCE_COLOR: 'True'
+
+# Общий шаблон подготовки SSH-ключа перед выполнением задач
+.ssh_setup: &ssh_setup
+  before_script:
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    # Записываем приватный ключ из переменной GitLab в файл
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+
+# Шаг 1: Проверка синтаксиса плейбука (запускается при каждом пуше)
+syntax_check:
+  stage: lint
+  image: cytopia/ansible:latest
+  tags:
+    - Ansible
+  script:
+    - ansible-playbook --syntax-check -i inventory/ base.yaml
+
+# Шаг 2: Раскатка конфигурации на серверы (запускается вручную кнопкой в интерфейсе)
+deploy_servers:
+  stage: deploy
+  image: cytopia/ansible:latest
+  tags:
+    - Ansible
+  <<: *ssh_setup
+  script:
+    - ansible-playbook -i inventory/ base.yaml
+  when: manual
+  only:
+    - main
