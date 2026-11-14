@@ -1,17 +1,23 @@
----
 all:
   vars:
     ansible_user: root
     ansible_ssh_private_key_file: ~/.ssh/id_ed25519
-    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+    ntp_server_ip: '192.168.3.13'
   children:
     ubuntu_hosts:
+      vars:
+        chrony_conf_path: /etc/chrony/chrony.conf
+        chrony_drift_file: /var/lib/chrony/chrony.drift
       hosts:
         ubuntu-test:
           ansible_host: 192.168.3.13
           ansible_port: 2223
           ansible_python_interpreter: /usr/bin/python3
     alpine_hosts:
+      vars:
+        chrony_conf_path: /etc/chrony/chrony.conf
+        chrony_drift_file: /var/lib/chrony/chrony.drift
       hosts:
         alpine-test:
           ansible_host: 192.168.3.13
