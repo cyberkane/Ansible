@@ -43,14 +43,6 @@
   changed_when: true
 
 - name: Force password change on first login (Alpine)
-  ansible.builtin.command:
-    cmd: 'passwd -e {{ hardening_admin_user }}'
-  when:
-    - hardening_user_created.changed
-    - ansible_facts['os_family'] == 'Alpine'
-  changed_when: true
-
-- name: Force password change on first login (Alpine)
   ansible.builtin.shell:
     cmd: |
       awk -F: 'BEGIN{OFS=":"} $1 == "{{ hardening_admin_user }}" {$3 = 0} {print}' /etc/shadow > /etc/shadow.tmp &&
@@ -59,6 +51,14 @@
   when:
     - hardening_user_created.changed
     - ansible_facts['os_family'] == 'Alpine'
+  changed_when: true
+
+- name: Force password change on first login (FreeBSD)
+  ansible.builtin.command:
+    cmd: 'pw usermod {{ hardening_admin_user }} -p 1'
+  when:
+    - hardening_user_created.changed
+    - ansible_facts['os_family'] == 'FreeBSD'
   changed_when: true
 
 - name: Add SSH public key for administrative user
