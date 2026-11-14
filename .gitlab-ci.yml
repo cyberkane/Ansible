@@ -1,26 +1,10 @@
-stages:
-  - lint
-  - deploy
-
-variables:
-  ANSIBLE_HOST_KEY_CHECKING: 'False'
-  ANSIBLE_FORCE_COLOR: 'True'
-
-.ssh_setup: &ssh_setup
-  before_script:
-    - apk add --no-cache openssh-client
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519
-    - chmod 600 ~/.ssh/id_ed25519
-
 syntax_check:
   stage: lint
   image: cytopia/ansible:latest
   tags:
     - Ansible
   script:
-    - ansible-playbook --syntax-check -i inventory/base.yaml base.yaml
+    - ansible-playbook --syntax-check -i inventory/inventory.yaml base.yaml
 
 ansible_lint:
   stage: lint
@@ -39,6 +23,6 @@ deploy_servers:
     - Ansible
   <<: *ssh_setup
   script:
-    - ansible-playbook -i inventory/base.yaml base.yaml
+    - ansible-playbook -i inventory/inventory.yaml base.yaml
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
