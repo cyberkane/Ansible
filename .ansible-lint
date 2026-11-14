@@ -1,0 +1,8 @@
+---
+profile: production
+
+exclude_paths:
+  - .git/
+  - .gitlab-ci.yml
+
+skip_list: []
