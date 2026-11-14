@@ -13,11 +13,10 @@ variables:
   before_script:
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    # Записываем приватный ключ из переменной GitLab в файл
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
+    # Сохраняем приватный ключ как id_ed25519
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
 
-# Шаг 1: Проверка синтаксиса плейбука (запускается при каждом пуше)
 syntax_check:
   stage: lint
   image: cytopia/ansible:latest
@@ -26,7 +25,6 @@ syntax_check:
   script:
     - ansible-playbook --syntax-check -i inventory/base.yaml base.yaml
 
-# Шаг 2: Раскатка конфигурации на серверы (запускается вручную кнопкой в интерфейсе)
 deploy_servers:
   stage: deploy
   image: cytopia/ansible:latest
@@ -35,6 +33,5 @@ deploy_servers:
   <<: *ssh_setup
   script:
     - ansible-playbook -i inventory/base.yaml base.yaml
-  when: manual
   only:
     - main

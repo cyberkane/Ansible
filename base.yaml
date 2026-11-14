@@ -1,8 +1,20 @@
 ---
 - name: Test Ansible pipeline
   hosts: all
-  gather_facts: false
+  gather_facts: true
+
   tasks:
-    - name: Print success message
+    - name: Print system info from target containers
       ansible.builtin.debug:
-        msg: 'Ansible pipeline is working successfully!'
+        msg: 'Connected to {{ inventory_hostname }} ({{ ansible_distribution }} {{ ansible_distribution_version }})'
+
+    - name: Create a test marker file on target hosts
+      ansible.builtin.copy:
+        content: "Deployed via GitLab CI at {{ ansible_date_time.iso8601 }}\n"
+        dest: /tmp/gitlab_ci_test.txt
+        mode: '0644'
+
+    - name: Ensure curl package is installed on both Ubuntu and Alpine
+      ansible.builtin.package:
+        name: curl
+        state: present
