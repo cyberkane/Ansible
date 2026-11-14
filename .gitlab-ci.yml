@@ -14,7 +14,6 @@ variables:
     - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
 
-# Шаг 1.1: Быстрая проверка базового синтаксиса
 syntax_check:
   stage: lint
   image: cytopia/ansible:latest
@@ -23,7 +22,6 @@ syntax_check:
   script:
     - ansible-playbook --syntax-check -i inventory/base.yaml base.yaml
 
-# Шаг 1.2: Глубокая проверка стандартов и лучших практик
 ansible_lint:
   stage: lint
   image:
@@ -32,7 +30,7 @@ ansible_lint:
   tags:
     - Ansible
   script:
-    - ansible-lint --force-color base.yaml
+    - ansible-lint --force-color
 
 deploy_servers:
   stage: deploy
@@ -42,5 +40,5 @@ deploy_servers:
   <<: *ssh_setup
   script:
     - ansible-playbook -i inventory/base.yaml base.yaml
-  only:
-    - main
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
