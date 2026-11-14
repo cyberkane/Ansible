@@ -11,9 +11,9 @@ variables:
 # Общий шаблон подготовки SSH-ключа перед выполнением задач
 .ssh_setup: &ssh_setup
   before_script:
+    - apk add --no-cache openssh-client
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    # Сохраняем приватный ключ как id_ed25519
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
 
