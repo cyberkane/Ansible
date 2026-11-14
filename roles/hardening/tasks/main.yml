@@ -1,0 +1,76 @@
+---
+- name: Ensure sudo package is installed
+  ansible.builtin.package:
+    name: sudo
+    state: present
+
+- name: Determine administrative sudo group name
+  ansible.builtin.set_fact:
+    hardening_sudo_group: "{{ 'sudo' if ansible_facts['os_family'] == 'Debian' else 'wheel' }}"
+
+- name: Ensure administrative group exists
+  ansible.builtin.group:
+    name: '{{ hardening_sudo_group }}'
+    state: present
+
+- name: Allow administrative group to use sudo
+  ansible.builtin.copy:
+    content: "%{{ hardening_sudo_group }} ALL=(ALL:ALL) ALL\n"
+    dest: "{{ '/usr/local/etc/sudoers.d/10-admins' if ansible_facts['os_family'] == 'FreeBSD' else '/etc/sudoers.d/10-admins' }}"
+    owner: root
+    group: "{{ 'wheel' if ansible_facts['os_family'] == 'FreeBSD' else 'root' }}"
+    mode: '0440'
+    validate: 'visudo -cf %s'
+
+- name: Create administrative user
+  ansible.builtin.user:
+    name: '{{ hardening_admin_user }}'
+    groups: '{{ hardening_sudo_group }}'
+    append: true
+    shell: "{{ '/bin/sh' if ansible_facts['os_family'] == 'Alpine' else '/bin/bash' }}"
+    password: "{{ hardening_admin_password | password_hash('sha512') }}"
+    update_password: on_create
+    create_home: true
+    state: present
+  register: hardening_user_created
+
+- name: Force password change on first login (Linux)
+  ansible.builtin.command:
+    cmd: 'chage -d 0 {{ hardening_admin_user }}'
+  when:
+    - hardening_user_created.changed
+    - ansible_facts['os_family'] not in ['FreeBSD', 'Alpine']
+  changed_when: true
+
+- name: Force password change on first login (Alpine)
+  ansible.builtin.command:
+    cmd: 'passwd -e {{ hardening_admin_user }}'
+  when:
+    - hardening_user_created.changed
+    - ansible_facts['os_family'] == 'Alpine'
+  changed_when: true
+
+- name: Force password change on first login (FreeBSD)
+  ansible.builtin.command:
+    cmd: 'pw usermod {{ hardening_admin_user }} -p 1'
+  when:
+    - hardening_user_created.changed
+    - ansible_facts['os_family'] == 'FreeBSD'
+  changed_when: true
+
+- name: Add SSH public key for administrative user
+  ansible.posix.authorized_key:
+    user: '{{ hardening_admin_user }}'
+    key: '{{ hardening_admin_ssh_key }}'
+    state: present
+  when: hardening_admin_ssh_key | length > 0
+
+- name: Deploy hardened sshd_config from Jinja2 template
+  ansible.builtin.template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: "{{ 'wheel' if ansible_facts['os_family'] == 'FreeBSD' else 'root' }}"
+    mode: '0600'
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: Reload sshd service

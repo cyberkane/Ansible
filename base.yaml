@@ -15,6 +15,7 @@
         mode: '0644'
 
   roles:
+    - role: common
     - role: chrony
     - role: zabbix_agent2
-    - role: common
+    - role: hardening

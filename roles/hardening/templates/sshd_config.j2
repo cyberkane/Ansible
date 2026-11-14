@@ -1,0 +1,38 @@
+# Сгенерировано Ansible (role: hardening) для {{ inventory_hostname }}
+Port {{ hardening_ssh_port }}
+Protocol 2
+
+# Базовая безопасность
+PermitRootLogin yes
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+
+# Запрещаем вход по паролю всем пользователям по умолчанию
+PasswordAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+KbdInteractiveAuthentication no
+
+# Обязательно для корректной смены пароля при первом входе по SSH
+{% if ansible_facts['os_family'] != 'Alpine' %}
+UsePAM yes
+{% endif %}
+
+X11Forwarding no
+PrintMotd no
+AcceptEnv LANG LC_*
+
+{% if ansible_facts['os_family'] == 'Debian' %}
+Subsystem sftp /usr/lib/openssh/sftp-server
+{% elif ansible_facts['os_family'] == 'Alpine' %}
+Subsystem sftp /usr/lib/ssh/sftp-server
+{% elif ansible_facts['os_family'] == 'FreeBSD' %}
+Subsystem sftp /usr/libexec/sftp-server
+{% else %}
+Subsystem sftp /usr/libexec/openssh/sftp-server
+{% endif %}
+
+# Исключение: разрешаем вход по паролю ТОЛЬКО для пользователя root
+Match User root
+    PasswordAuthentication yes
+    KbdInteractiveAuthentication yes
