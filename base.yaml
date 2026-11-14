@@ -1,5 +1,5 @@
 ---
-- name: Test Ansible pipeline
+- name: Base server configuration
   hosts: all
   gather_facts: true
 
@@ -14,37 +14,10 @@
         dest: /tmp/gitlab_ci_test.txt
         mode: '0644'
 
-    - name: Ensure curl package is installed on both Ubuntu and Alpine
+    - name: Ensure curl package is installed on target hosts
       ansible.builtin.package:
         name: curl
         state: present
 
-    - name: Install chrony package on Ubuntu and Alpine
-      ansible.builtin.package:
-        name: chrony
-        state: present
-
-    - name: Ensure chrony configuration and log directories exist
-      ansible.builtin.file:
-        path: '{{ item }}'
-        state: directory
-        mode: '0755'
-      loop:
-        - /etc/chrony
-        - /var/log/chrony
-        - /var/lib/chrony
-
-    - name: Deploy chrony configuration from Jinja2 template
-      ansible.builtin.template:
-        src: templates/chrony.conf.j2
-        dest: '{{ chrony_conf_path }}'
-        owner: root
-        group: root
-        mode: '0644'
-      notify: Validate chrony configuration
-
-  handlers:
-    - name: Validate chrony configuration
-      ansible.builtin.command:
-        cmd: chronyd -p -f {{ chrony_conf_path }}
-      changed_when: false
+  roles:
+    - role: chrony

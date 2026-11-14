@@ -1,0 +1,6 @@
+---
+- name: Validate chrony configuration
+  ansible.builtin.command:
+    cmd: chronyd -p -f {{ chrony_conf_path }}
+  changed_when: false
+  check_mode: false

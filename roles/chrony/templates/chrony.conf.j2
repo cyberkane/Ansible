@@ -1,0 +1,7 @@
+# Сгенерировано Ansible для хоста {{ inventory_hostname }} ({{ ansible_facts['distribution'] }})
+server {{ chrony_ntp_server_ip }} iburst prefer
+
+driftfile {{ chrony_drift_file }}
+makestep 1.0 3
+rtcsync
+logdir /var/log/chrony

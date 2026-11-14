@@ -1,0 +1,4 @@
+---
+chrony_ntp_server_ip: '192.168.3.13'
+chrony_conf_path: '/etc/chrony/chrony.conf'
+chrony_drift_file: '/var/lib/chrony/chrony.drift'

@@ -1,5 +1,6 @@
 stages:
   - lint
+  - dry_run
   - deploy
 
 variables:
@@ -34,6 +35,19 @@ ansible_lint:
   script:
     - ansible-lint --force-color
 
+dry_run_servers:
+  stage: dry_run
+  image:
+    name: local/ansible-runner:latest
+    pull_policy: if-not-present
+  tags:
+    - Ansible
+  <<: *ssh_setup
+  script:
+    - ansible-playbook --check --diff -i inventory/inventory.yaml base.yaml
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
 deploy_servers:
   stage: deploy
   image:
@@ -41,6 +55,7 @@ deploy_servers:
     pull_policy: if-not-present
   tags:
     - Ansible
+  resource_group: test-environment
   <<: *ssh_setup
   script:
     - ansible-playbook -i inventory/inventory.yaml base.yaml
