@@ -1,0 +1,34 @@
+---
+- name: Load OS-specific variables
+  ansible.builtin.include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - "{{ ansible_facts['distribution'] }}.yml"
+        - "{{ ansible_facts['os_family'] }}.yml"
+        - 'default.yml'
+      paths:
+        - vars
+      skip: true
+
+- name: Install base and OS-specific packages
+  ansible.builtin.package:
+    name: '{{ common_universal_packages + common_os_specific_packages }}'
+    state: present
+
+- name: Ensure /etc/profile.d directory exists
+  ansible.builtin.file:
+    path: /etc/profile.d
+    state: directory
+    owner: root
+    group: "{{ 'wheel' if ansible_facts['os_family'] == 'FreeBSD' else 'root' }}"
+    mode: '0755'
+
+- name: Set nano as default system editor via profile.d
+  ansible.builtin.copy:
+    content: |
+      export EDITOR={{ common_default_editor }}
+      export VISUAL={{ common_default_editor }}
+    dest: /etc/profile.d/editor.sh
+    owner: root
+    group: "{{ 'wheel' if ansible_facts['os_family'] == 'FreeBSD' else 'root' }}"
+    mode: '0644'

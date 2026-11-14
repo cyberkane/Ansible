@@ -1,0 +1,17 @@
+---
+common_universal_packages:
+  - nano
+  - unzip
+  - htop
+  - ncdu
+  - curl
+  - wget
+  - tcpdump
+  - mtr
+  - tmux
+  - jq
+  - rsync
+  - git
+
+common_os_specific_packages: []
+common_default_editor: 'nano'

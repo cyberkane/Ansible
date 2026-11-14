@@ -1,0 +1,4 @@
+---
+common_os_specific_packages:
+  - bind-tools
+  - lsof

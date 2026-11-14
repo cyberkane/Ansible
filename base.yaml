@@ -14,11 +14,7 @@
         dest: /tmp/gitlab_ci_test.txt
         mode: '0644'
 
-    - name: Ensure curl package is installed on target hosts
-      ansible.builtin.package:
-        name: curl
-        state: present
-
   roles:
     - role: chrony
     - role: zabbix_agent2
+    - role: common
