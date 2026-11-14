@@ -26,11 +26,12 @@ syntax_check:
 # Шаг 1.2: Глубокая проверка стандартов и лучших практик
 ansible_lint:
   stage: lint
-  image: cytopia/ansible-lint:latest
+  image:
+    name: cytopia/ansible-lint:latest
+    entrypoint: ['']
   tags:
     - Ansible
   script:
-    # Флаг --force-color сохраняет цветной вывод ошибок в логах GitLab
     - ansible-lint --force-color base.yaml
 
 deploy_servers:
