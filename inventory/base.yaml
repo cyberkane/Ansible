@@ -1,4 +1,18 @@
 all:
-  hosts:
-    localhost:
-      ansible_connection: local
+  vars:
+    ansible_user: root
+    ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+  children:
+    ubuntu_hosts:
+      hosts:
+        ubuntu-test:
+          ansible_host: 192.168.3.13
+          ansible_port: 2223
+          ansible_python_interpreter: /usr/bin/python3
+    alpine_hosts:
+      hosts:
+        alpine-test:
+          ansible_host: 192.168.3.13
+          ansible_port: 2224
+          ansible_python_interpreter: /usr/bin/python3
