@@ -3,7 +3,7 @@
   hosts: all
   gather_facts: true
 
-  tasks:
+  pre_tasks:
     - name: Print system info from target containers
       ansible.builtin.debug:
         msg: 'Connected to {{ inventory_hostname }} ({{ ansible_facts["distribution"] }} {{ ansible_facts["distribution_version"] }})'
@@ -21,3 +21,4 @@
 
   roles:
     - role: chrony
+    - role: zabbix_agent2

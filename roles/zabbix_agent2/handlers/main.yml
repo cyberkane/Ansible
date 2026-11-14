@@ -1,0 +1,8 @@
+---
+- name: Restart zabbix-agent2 in container
+  ansible.builtin.shell:
+    cmd: |
+      pkill -x zabbix_agent2 || true
+      sleep 1
+      su -s /bin/sh zabbix -c "zabbix_agent2 -c {{ zabbix_agent2_conf_path }} &"
+  changed_when: true

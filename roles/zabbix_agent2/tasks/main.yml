@@ -1,0 +1,56 @@
+---
+- name: Install zabbix-agent2 on Alpine Linux
+  community.general.apk:
+    name: zabbix-agent2
+    state: present
+    update_cache: true
+  when: ansible_facts['os_family'] == 'Alpine'
+
+- name: Install prerequisites for Zabbix repository on Ubuntu
+  ansible.builtin.apt:
+    name:
+      - wget
+      - ca-certificates
+    state: present
+    update_cache: true
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Install zabbix-agent2 on Ubuntu (from default repo or fallback)
+  ansible.builtin.apt:
+    name: zabbix-agent2
+    state: present
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Ensure zabbix user and group exist
+  ansible.builtin.user:
+    name: zabbix
+    system: true
+    shell: /sbin/nologin
+    create_home: false
+
+- name: Ensure zabbix directories exist with proper permissions
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: directory
+    owner: zabbix
+    group: zabbix
+    mode: '0755'
+  loop:
+    - /etc/zabbix
+    - /etc/zabbix/zabbix_agent2.d
+    - /var/log/zabbix
+    - /var/run/zabbix
+
+- name: Deploy zabbix_agent2.conf from Jinja2 template
+  ansible.builtin.template:
+    src: zabbix_agent2.conf.j2
+    dest: '{{ zabbix_agent2_conf_path }}'
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart zabbix-agent2 in container
+
+- name: Ensure zabbix_agent2 process is running in container
+  ansible.builtin.shell:
+    cmd: pgrep -x zabbix_agent2 || su -s /bin/sh zabbix -c "zabbix_agent2 -c {{ zabbix_agent2_conf_path }} &"
+  changed_when: false

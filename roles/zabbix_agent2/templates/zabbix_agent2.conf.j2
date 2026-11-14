@@ -1,0 +1,21 @@
+# Сгенерировано Ansible для хоста {{ inventory_hostname }} ({{ ansible_facts['distribution'] }})
+PidFile={{ zabbix_agent2_pid_file }}
+LogType=file
+LogFile={{ zabbix_agent2_log_file }}
+LogFileSize=10
+
+# Пассивный режим (указываем IP сервера на случай прямых запросов)
+Server={{ zabbix_agent2_server_ip }}
+
+# Активный режим (основной способ отправки данных и авторегистрации)
+ServerActive={{ zabbix_agent2_server_ip }}:{{ zabbix_agent2_server_port }}
+
+# Уникальное имя узла в Zabbix
+Hostname={{ inventory_hostname }}
+
+# Метаданные для правила авторегистрации
+HostMetadata={{ zabbix_agent2_metadata }}
+
+# Подключаемые конфиги и плагины
+Include=/etc/zabbix/zabbix_agent2.d/*.conf
+ControlSocket=/tmp/agent.sock
