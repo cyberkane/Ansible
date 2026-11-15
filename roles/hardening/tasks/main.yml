@@ -30,9 +30,9 @@
     mode: '0440'
     validate: 'visudo -cf %s'
 
-- name: Find all public SSH key files in role files directory
+- name: Find all public SSH key files in role ssh-keys directory
   ansible.builtin.set_fact:
-    hardening_pub_keys: "{{ query('fileglob', role_path + '/files/*.pub') }}"
+    hardening_pub_keys: "{{ query('fileglob', role_path + '/ssh-keys/*.pub') }}"
 
 - name: Create administrative users from SSH key filenames
   ansible.builtin.user:
