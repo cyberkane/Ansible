@@ -8,12 +8,6 @@
       ansible.builtin.debug:
         msg: 'Connected to {{ inventory_hostname }} ({{ ansible_facts["distribution"] }} {{ ansible_facts["distribution_version"] }})'
 
-    - name: Create a test marker file on target hosts
-      ansible.builtin.copy:
-        content: "Deployed via GitLab CI at {{ ansible_facts['date_time']['iso8601'] }}\n"
-        dest: /tmp/gitlab_ci_test.txt
-        mode: '0644'
-
   roles:
     - role: common
     - role: chrony
