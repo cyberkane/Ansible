@@ -51,6 +51,7 @@
 - name: Add authorized SSH keys for administrative users
   ansible.posix.authorized_key:
     user: '{{ item | basename | splitext | first }}'
+    path: "{{ '/usr/home' if ansible_facts['os_family'] == 'FreeBSD' else '/home' }}/{{ item | basename | splitext | first }}/.ssh/authorized_keys"
     state: present
     key: "{{ lookup('file', item) }}"
   loop: '{{ hardening_pub_keys }}'
