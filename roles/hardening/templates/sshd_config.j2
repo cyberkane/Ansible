@@ -1,38 +1,32 @@
-# Сгенерировано Ansible (role: hardening) для {{ inventory_hostname }}
-Port {{ hardening_ssh_port }}
-Protocol 2
+# Global SSHD configuration
+Port 22
 
-# Базовая безопасность
-PermitRootLogin yes
+# Authentication (disabled passwords for everyone by default)
 PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
-
-# Запрещаем вход по паролю всем пользователям по умолчанию
 PasswordAuthentication no
-PermitEmptyPasswords no
 ChallengeResponseAuthentication no
-KbdInteractiveAuthentication no
+PermitEmptyPasswords no
 
-# Обязательно для корректной смены пароля при первом входе по SSH
-{% if ansible_facts['os_family'] != 'Alpine' %}
-UsePAM yes
-{% endif %}
-
+# Security & Session
+PermitRootLogin prohibit-password
+UsePAM {{ 'no' if ansible_facts['os_family'] == 'Alpine' else 'yes' }}
 X11Forwarding no
 PrintMotd no
-AcceptEnv LANG LC_*
 
-{% if ansible_facts['os_family'] == 'Debian' %}
-Subsystem sftp /usr/lib/openssh/sftp-server
+# Subsystem SFTP (OS-specific path)
+{% if ansible_facts['os_family'] == 'FreeBSD' %}
+Subsystem sftp /usr/libexec/sftp-server
 {% elif ansible_facts['os_family'] == 'Alpine' %}
 Subsystem sftp /usr/lib/ssh/sftp-server
-{% elif ansible_facts['os_family'] == 'FreeBSD' %}
-Subsystem sftp /usr/libexec/sftp-server
-{% else %}
+{% elif ansible_facts['os_family'] in ['RedHat', 'ROSA'] %}
 Subsystem sftp /usr/libexec/openssh/sftp-server
+{% else %}
+Subsystem sftp /usr/lib/openssh/sftp-server
 {% endif %}
 
-# Исключение: разрешаем вход по паролю ТОЛЬКО для пользователя root
+# Allow password authentication ONLY for root
 Match User root
+    PermitRootLogin yes
     PasswordAuthentication yes
-    KbdInteractiveAuthentication yes
+    ChallengeResponseAuthentication yes

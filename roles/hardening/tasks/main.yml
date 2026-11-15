@@ -6,12 +6,20 @@
 
 - name: Determine administrative sudo group name
   ansible.builtin.set_fact:
-    hardening_sudo_group: "{{ 'sudo' if ansible_facts['os_family'] == 'Debian' else 'wheel' }}"
+    hardening_sudo_group: "{{ 'sudo' if ansible_facts['os_family'] in ['Debian', 'Astra Linux'] else 'wheel' }}"
 
 - name: Ensure administrative group exists
   ansible.builtin.group:
     name: '{{ hardening_sudo_group }}'
     state: present
+
+- name: Ensure sudoers.d directory exists
+  ansible.builtin.file:
+    path: "{{ '/usr/local/etc/sudoers.d' if ansible_facts['os_family'] == 'FreeBSD' else '/etc/sudoers.d' }}"
+    state: directory
+    owner: root
+    group: "{{ 'wheel' if ansible_facts['os_family'] == 'FreeBSD' else 'root' }}"
+    mode: '0750'
 
 - name: Allow administrative group to use sudo
   ansible.builtin.copy:
@@ -22,51 +30,46 @@
     mode: '0440'
     validate: 'visudo -cf %s'
 
-- name: Create administrative user
+- name: Find all public SSH key files in role files directory
+  ansible.builtin.set_fact:
+    hardening_pub_keys: "{{ query('fileglob', role_path + '/files/*.pub') }}"
+
+- name: Create administrative users from SSH key filenames
   ansible.builtin.user:
-    name: '{{ hardening_admin_user }}'
+    name: '{{ item | basename | splitext | first }}'
     groups: '{{ hardening_sudo_group }}'
     append: true
-    shell: "{{ '/bin/sh' if ansible_facts['os_family'] == 'Alpine' else '/bin/bash' }}"
-    password: "{{ hardening_admin_password | password_hash('sha512') }}"
+    shell: "{{ '/bin/sh' if ansible_facts['os_family'] in ['Alpine', 'FreeBSD'] else '/bin/bash' }}"
+    password: '*'
     update_password: on_create
     create_home: true
     state: present
-  register: hardening_user_created
+  loop: '{{ hardening_pub_keys }}'
+  loop_control:
+    label: '{{ item | basename | splitext | first }}'
 
-- name: Force password change on first login (Linux)
-  ansible.builtin.command:
-    cmd: 'chage -d 0 {{ hardening_admin_user }}'
-  when:
-    - hardening_user_created.changed
-    - ansible_facts['os_family'] not in ['FreeBSD', 'Alpine']
-  changed_when: true
-
-- name: Force password change on first login (Alpine)
-  ansible.builtin.shell:
-    cmd: |
-      awk -F: 'BEGIN{OFS=":"} $1 == "{{ hardening_admin_user }}" {$3 = 0} {print}' /etc/shadow > /etc/shadow.tmp &&
-      mv /etc/shadow.tmp /etc/shadow &&
-      chmod 640 /etc/shadow
-  when:
-    - hardening_user_created.changed
-    - ansible_facts['os_family'] == 'Alpine'
-  changed_when: true
-
-- name: Force password change on first login (FreeBSD)
-  ansible.builtin.command:
-    cmd: 'pw usermod {{ hardening_admin_user }} -p 1'
-  when:
-    - hardening_user_created.changed
-    - ansible_facts['os_family'] == 'FreeBSD'
-  changed_when: true
-
-- name: Add SSH public key for administrative user
+- name: Add authorized SSH keys for administrative users
   ansible.posix.authorized_key:
-    user: '{{ hardening_admin_user }}'
-    key: '{{ hardening_admin_ssh_key }}'
+    user: '{{ item | basename | splitext | first }}'
     state: present
-  when: hardening_admin_ssh_key | length > 0
+    key: "{{ lookup('file', item) }}"
+  loop: '{{ hardening_pub_keys }}'
+  loop_control:
+    label: '{{ item | basename }}'
+
+- name: Ensure SSH host keys exist
+  ansible.builtin.command:
+    cmd: ssh-keygen -A
+    creates: /etc/ssh/ssh_host_ed25519_key
+
+- name: Ensure privilege separation directory exists (Linux)
+  ansible.builtin.file:
+    path: /run/sshd
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: ansible_facts['os_family'] != 'FreeBSD'
 
 - name: Deploy hardened sshd_config from Jinja2 template
   ansible.builtin.template:
@@ -75,5 +78,5 @@
     owner: root
     group: "{{ 'wheel' if ansible_facts['os_family'] == 'FreeBSD' else 'root' }}"
     mode: '0600'
-    validate: '/usr/sbin/sshd -t -f %s'
+    validate: 'sshd -t -f %s'
   notify: Reload sshd service

@@ -1,5 +1,5 @@
 ---
-hardening_admin_user: 'sysadmin'
-hardening_admin_password: 'ChangeMeOnFirstLogin123!'
-hardening_admin_ssh_key: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA26NV661IpTnzWj3JIyGMbrRLiM10RFWMqAE/J7LKDo gitlab-ci'
 hardening_ssh_port: 22
+hardening_admin_user: 'test_admin'
+hardening_admin_ssh_pub_key_files:
+  - 'test_t_t.pub'

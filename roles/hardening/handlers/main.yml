@@ -1,12 +1,7 @@
 ---
 - name: Reload sshd service
-  ansible.builtin.shell:
-    cmd: |
-      if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-        systemctl reload ssh || systemctl reload sshd
-      elif command -v rc-service >/dev/null 2>&1 && [ -d /run/openrc ]; then
-        rc-service sshd reload
-      else
-        kill -HUP $(cat /var/run/sshd.pid 2>/dev/null || pgrep -o sshd)
-      fi
-  changed_when: true
+  ansible.builtin.service:
+    name: "{{ 'ssh' if ansible_facts['os_family'] in ['Debian', 'Astra Linux'] else 'sshd' }}"
+    state: reloaded
+  when: ansible_facts['service_mgr'] != 'unknown'
+  failed_when: false
